@@ -1,129 +1,74 @@
--- LocalScript: StarterGui > ScreenGui
+-- LocalScript (StarterPlayerScripts)
 local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+-- RemoteEvent สำหรับส่งข้อมูลไป Server
+local JoinPlayerEvent = ReplicatedStorage:WaitForChild("JoinPlayerEvent")
+
+-- UI
 local player = Players.LocalPlayer
-
--- GUI หลัก
-local screenGui = Instance.new("ScreenGui")
+local screenGui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
 screenGui.Name = "JoinPlayerUI"
-screenGui.Parent = player:WaitForChild("PlayerGui")
 
--- Frame
-local mainFrame = Instance.new("Frame")
-mainFrame.Size = UDim2.new(0, 350, 0, 200)
-mainFrame.Position = UDim2.new(0.5, -175, 0.5, -100)
-mainFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-mainFrame.BorderSizePixel = 0
-mainFrame.Parent = screenGui
+local frame = Instance.new("Frame", screenGui)
+frame.Size = UDim2.new(0, 300, 0, 200)
+frame.Position = UDim2.new(0.5, -150, 0.5, -100)
+frame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+frame.BorderSizePixel = 0
 
--- Title
-local title = Instance.new("TextLabel")
-title.Size = UDim2.new(1, 0, 0, 30)
-title.BackgroundTransparency = 1
+local title = Instance.new("TextLabel", frame)
 title.Text = "Join Player"
+title.Size = UDim2.new(1, 0, 0, 40)
+title.BackgroundTransparency = 1
 title.Font = Enum.Font.SourceSansBold
-title.TextSize = 22
+title.TextSize = 24
 title.TextColor3 = Color3.fromRGB(255, 255, 255)
-title.Parent = mainFrame
 
--- ช่องกรอกชื่อ
-local playerInput = Instance.new("TextBox")
-playerInput.Size = UDim2.new(0.55, 0, 0, 40)
-playerInput.Position = UDim2.new(0.05, 0, 0.2, 0)
-playerInput.PlaceholderText = "กรอกชื่อผู้เล่น..."
-playerInput.Text = ""
-playerInput.TextSize = 20
-playerInput.Font = Enum.Font.SourceSans
-playerInput.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-playerInput.TextColor3 = Color3.fromRGB(255, 255, 255)
-playerInput.Parent = mainFrame
+local nameBox = Instance.new("TextBox", frame)
+nameBox.PlaceholderText = "กรอกชื่อผู้เล่น..."
+nameBox.Size = UDim2.new(1, -20, 0, 40)
+nameBox.Position = UDim2.new(0, 10, 0, 50)
+nameBox.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+nameBox.TextColor3 = Color3.fromRGB(255, 255, 255)
 
--- Avatar Image (โปรไฟล์)
-local avatarImage = Instance.new("ImageLabel")
-avatarImage.Size = UDim2.new(0, 60, 0, 60)
-avatarImage.Position = UDim2.new(0.65, 0, 0.15, 0)
-avatarImage.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
-avatarImage.Image = "rbxasset://textures/ui/GuiImagePlaceholder.png" -- รูปเริ่มต้น
-avatarImage.Parent = mainFrame
+local status = Instance.new("TextLabel", frame)
+status.Size = UDim2.new(1, -20, 0, 30)
+status.Position = UDim2.new(0, 10, 0, 100)
+status.BackgroundTransparency = 1
+status.Font = Enum.Font.SourceSans
+status.TextSize = 18
+status.TextColor3 = Color3.fromRGB(255, 200, 0)
+status.Text = "⚠️ ยังไม่ได้เช็คผู้เล่น"
 
--- Label แสดงชื่อเกม
-local gameNameLabel = Instance.new("TextLabel")
-gameNameLabel.Size = UDim2.new(1, -20, 0, 30)
-gameNameLabel.Position = UDim2.new(0.05, 0, 0.45, 0)
-gameNameLabel.BackgroundTransparency = 1
-gameNameLabel.Text = "ชื่อเกม: -"
-gameNameLabel.Font = Enum.Font.SourceSans
-gameNameLabel.TextSize = 18
-gameNameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-gameNameLabel.TextXAlignment = Enum.TextXAlignment.Left
-gameNameLabel.Parent = mainFrame
+local joinBtn = Instance.new("TextButton", frame)
+joinBtn.Size = UDim2.new(0.45, 0, 0, 40)
+joinBtn.Position = UDim2.new(0.05, 0, 1, -50)
+joinBtn.BackgroundColor3 = Color3.fromRGB(0, 120, 255)
+joinBtn.Text = "Join"
+joinBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+joinBtn.Font = Enum.Font.SourceSansBold
+joinBtn.TextSize = 20
 
--- Label สถานะ
-local statusLabel = Instance.new("TextLabel")
-statusLabel.Size = UDim2.new(1, -20, 0, 30)
-statusLabel.Position = UDim2.new(0.05, 0, 0.6, 0)
-statusLabel.BackgroundTransparency = 1
-statusLabel.Text = "⚠ ยังไม่ได้เช็คผู้เล่น"
-statusLabel.Font = Enum.Font.SourceSans
-statusLabel.TextSize = 18
-statusLabel.TextColor3 = Color3.fromRGB(255, 200, 0)
-statusLabel.TextXAlignment = Enum.TextXAlignment.Left
-statusLabel.Parent = mainFrame
+local shareBtn = Instance.new("TextButton", frame)
+shareBtn.Size = UDim2.new(0.45, 0, 0, 40)
+shareBtn.Position = UDim2.new(0.5, 0, 1, -50)
+shareBtn.BackgroundColor3 = Color3.fromRGB(0, 200, 100)
+shareBtn.Text = "Share"
+shareBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+shareBtn.Font = Enum.Font.SourceSansBold
+shareBtn.TextSize = 20
 
--- ปุ่ม Join
-local joinButton = Instance.new("TextButton")
-joinButton.Size = UDim2.new(0.4, -10, 0, 40)
-joinButton.Position = UDim2.new(0.05, 0, 0.8, 0)
-joinButton.Text = "Join"
-joinButton.Font = Enum.Font.SourceSansBold
-joinButton.TextSize = 20
-joinButton.BackgroundColor3 = Color3.fromRGB(0, 120, 255)
-joinButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-joinButton.Parent = mainFrame
-
--- ปุ่ม Share
-local shareButton = Instance.new("TextButton")
-shareButton.Size = UDim2.new(0.4, -10, 0, 40)
-shareButton.Position = UDim2.new(0.55, 0, 0.8, 0)
-shareButton.Text = "Share"
-shareButton.Font = Enum.Font.SourceSansBold
-shareButton.TextSize = 20
-shareButton.BackgroundColor3 = Color3.fromRGB(0, 200, 100)
-shareButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-shareButton.Parent = mainFrame
-
--------------------------------------------------------
--- 🌟 ระบบจำลอง (Mock Data)
--------------------------------------------------------
-local function mockCheckPlayer(username)
-    if username == "" then
-        return nil, "⚠ กรุณากรอกชื่อผู้เล่น"
-    end
-
-    -- สมมติว่าถ้าใส่ "Farhan" = อยู่ในเกมเดียวกัน
-    if username == "Farhan" then
-        return "My Test Game", "✅ ผู้เล่นอยู่ในเกมเดียวกัน", "rbxassetid://7072724538"
-    else
-        return "Other Game", "⚠ ผู้เล่นไม่อยู่ในเกมเดียวกัน", "rbxassetid://7072719338"
-    end
-end
-
--- Event กดปุ่ม Join
-joinButton.MouseButton1Click:Connect(function()
-    local username = playerInput.Text
-    local gameName, status, avatar = mockCheckPlayer(username)
-
-    if gameName then
-        gameNameLabel.Text = "ชื่อเกม: " .. gameName
-        statusLabel.Text = status
-        avatarImage.Image = avatar -- อัพเดทรูปโปรไฟล์
-    else
-        gameNameLabel.Text = "ชื่อเกม: -"
-        statusLabel.Text = status
-        avatarImage.Image = "rbxasset://textures/ui/GuiImagePlaceholder.png"
-    end
+-- เมื่อกดปุ่ม Join
+joinBtn.MouseButton1Click:Connect(function()
+	if nameBox.Text ~= "" then
+		status.Text = "🔍 กำลังเชื่อมต่อ..."
+		JoinPlayerEvent:FireServer(nameBox.Text)
+	else
+		status.Text = "⚠️ กรุณากรอกชื่อผู้เล่น"
+	end
 end)
 
--- Event กดปุ่ม Share
-shareButton.MouseButton1Click:Connect(function()
-    statusLabel.Text = "📢 แชร์ชื่อผู้เล่น: " .. (playerInput.Text ~= "" and playerInput.Text or "ไม่มี")
+-- ฟังข้อความกลับจาก Server
+JoinPlayerEvent.OnClientEvent:Connect(function(message)
+	status.Text = message
 end)
