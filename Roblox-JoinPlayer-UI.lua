@@ -10,8 +10,8 @@ screenGui.Name = "JoinPlayerUI"
 local mainFrame = Instance.new("Frame")
 mainFrame.Size = UDim2.new(0, 320, 0, 260)
 mainFrame.Position = UDim2.new(0.5, -160, 0.2, 0)
-mainFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-mainFrame.BackgroundTransparency = 0.3
+mainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+mainFrame.BackgroundTransparency = 0
 mainFrame.Parent = screenGui
 Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0, 15)
 
@@ -33,7 +33,7 @@ nameBox.TextScaled = true
 nameBox.TextColor3 = Color3.new(1,1,1)
 Instance.new("UICorner", nameBox).CornerRadius = UDim.new(0, 10)
 
--- ชื่อเกมปัจจุบันเรา
+-- ชื่อเกมปัจจุบัน
 local gameLabel = Instance.new("TextLabel", mainFrame)
 gameLabel.Size = UDim2.new(0, 280, 0, 30)
 gameLabel.Position = UDim2.new(0.5, -140, 0.3, 0)
@@ -57,9 +57,18 @@ statusLabel.TextScaled = true
 statusLabel.TextColor3 = Color3.fromRGB(255, 200, 0)
 statusLabel.Text = "⚠️ ยังไม่ได้เช็คผู้เล่น"
 
+-- ปุ่ม Join
+local joinButton = Instance.new("TextButton", mainFrame)
+joinButton.Size = UDim2.new(0, 200, 0, 40)
+joinButton.Position = UDim2.new(0.5, -100, 0.75, 0)
+joinButton.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+joinButton.TextColor3 = Color3.new(1,1,1)
+joinButton.TextScaled = true
+joinButton.Text = "เข้าร่วมผู้เล่น"
+Instance.new("UICorner", joinButton).CornerRadius = UDim.new(0, 10)
+
 -- ฟังก์ชันเช็คผู้เล่น
 local function checkPlayer(targetName)
-	-- ดึง UserId
 	local success, userId = pcall(function()
 		return Players:GetUserIdFromNameAsync(targetName)
 	end)
@@ -69,7 +78,6 @@ local function checkPlayer(targetName)
 		return
 	end
 	
-	-- ดึงรูปโปรไฟล์
 	local thumbSuccess, thumbUrl = pcall(function()
 		return Players:GetUserThumbnailAsync(userId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size48x48)
 	end)
@@ -79,7 +87,6 @@ local function checkPlayer(targetName)
 		playerImage.Image = ""
 	end
 
-	-- เช็คว่าผู้เล่นอยู่ในเกมไหน
 	local ok, placeId, instanceId = pcall(function()
 		return Players:GetPlayerPlaceInstanceAsync(userId)
 	end)
@@ -98,7 +105,6 @@ local function checkPlayer(targetName)
 			end
 		end
 	else
-		-- ถ้าไม่ได้อยู่ในเกมปัจจุบัน แต่มีอยู่ในเกมอื่น/ออนไลน์
 		local online = false
 		for _, p in pairs(Players:GetPlayers()) do
 			if p.UserId == userId then
@@ -114,14 +120,14 @@ local function checkPlayer(targetName)
 	end
 end
 
--- เมื่อกรอกชื่อเสร็จ กด Enter เช็ค
+-- เมื่อกรอกชื่อเสร็จ กด Enter
 nameBox.FocusLost:Connect(function(enterPressed)
 	if enterPressed and nameBox.Text ~= "" then
 		checkPlayer(nameBox.Text)
 	end
 end)
 
--- ปุ่ม Join
+-- กดปุ่ม Join
 joinButton.MouseButton1Click:Connect(function()
 	if nameBox.Text ~= "" then
 		local success, userId = pcall(function()
