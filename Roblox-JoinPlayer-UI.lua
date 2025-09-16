@@ -1,14 +1,12 @@
 -- LocalScript
 
 local Players = game:GetService("Players")
-local TeleportService = game:GetService("TeleportService")
-
 local player = Players.LocalPlayer
 
 -- GUI หลัก
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "JoinUI"
-screenGui.Parent = player:WaitForChild("PlayerGui")
+screenGui.Parent = player:WaitForChild("PlayerGui") -- แก้ตรงนี้ให้มั่นใจว่ามี PlayerGui
 
 local mainFrame = Instance.new("Frame")
 mainFrame.Size = UDim2.new(0, 300, 0, 150)
@@ -29,13 +27,14 @@ nameBox.Text = ""
 nameBox.TextSize = 18
 nameBox.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
 nameBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+nameBox.ClearTextOnFocus = false
 nameBox.Parent = mainFrame
 
 local nameCorner = Instance.new("UICorner")
 nameCorner.CornerRadius = UDim.new(0, 8)
 nameCorner.Parent = nameBox
 
--- Avatar Image (วงกลมข้าง ๆ)
+-- Avatar Image
 local avatarImage = Instance.new("ImageLabel")
 avatarImage.Size = UDim2.new(0, 60, 0, 60)
 avatarImage.Position = UDim2.new(0.75, 0, 0.18, 0)
@@ -69,33 +68,38 @@ statusLabel.BackgroundTransparency = 1
 statusLabel.Text = ""
 statusLabel.TextSize = 16
 statusLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+statusLabel.TextWrapped = true
 statusLabel.Parent = mainFrame
 
--- ฟังก์ชันอัพเดต Avatar เวลาใส่ชื่อ
+-- ฟังก์ชันอัพเดต Avatar
 local function updateAvatar(username)
-	local success, result = pcall(function()
-		local userId = Players:GetUserIdFromNameAsync(username)
-		if userId then
-			local thumb, isReady = Players:GetUserThumbnailAsync(userId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size100x100)
-			if isReady then
+	coroutine.wrap(function()
+		local success, userId = pcall(function()
+			return Players:GetUserIdFromNameAsync(username)
+		end)
+		if success and userId then
+			local thumbSuccess, thumb = pcall(function()
+				return Players:GetUserThumbnailAsync(userId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size100x100)
+			end)
+			if thumbSuccess and thumb then
 				avatarImage.Image = thumb
+			else
+				avatarImage.Image = "rbxasset://textures/ui/GuiImagePlaceholder.png"
 			end
+		else
+			avatarImage.Image = "rbxasset://textures/ui/GuiImagePlaceholder.png"
 		end
-	end)
-
-	if not success then
-		avatarImage.Image = "rbxasset://textures/ui/GuiImagePlaceholder.png"
-	end
+	end)()
 end
 
--- เวลาเปลี่ยนข้อความในช่อง จะโหลด Avatar
+-- โหลด Avatar เวลาเปลี่ยนข้อความ
 nameBox.FocusLost:Connect(function(enterPressed)
 	if nameBox.Text ~= "" then
 		updateAvatar(nameBox.Text)
 	end
 end)
 
--- ปุ่ม Join กดแล้วลอง Teleport หา player เป้าหมาย
+-- ปุ่ม Join
 joinButton.MouseButton1Click:Connect(function()
 	local username = nameBox.Text
 	if username == "" then
@@ -103,17 +107,15 @@ joinButton.MouseButton1Click:Connect(function()
 		return
 	end
 
-	local success, result = pcall(function()
+	local success, userId = pcall(function()
 		return Players:GetUserIdFromNameAsync(username)
 	end)
 
-	if success and result then
-		-- เช็กว่า target player อยู่ในเกมไหม (จำลอง)
+	if success and userId then
 		local targetPlayer = Players:FindFirstChild(username)
 		if targetPlayer then
-			statusLabel.Text = "กำลังเข้าร่วมเกมของ " .. username
-			-- ถ้าอยาก Teleport จริง ต้องใช้ TeleportService (ใช้ได้เฉพาะใน ServerScript)
-			-- TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, player)
+			statusLabel.Text = "กำลังเข้าร่วมเกมของ " .. username .. " (จำลอง)"
+			-- หากต้องการ Teleport จริง ต้องทำผ่าน ServerScript
 		else
 			statusLabel.Text = "❌ ผู้เล่นไม่อยู่ในเกมเดียวกัน"
 		end
