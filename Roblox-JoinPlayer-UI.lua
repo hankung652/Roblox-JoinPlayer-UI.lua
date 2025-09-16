@@ -8,12 +8,19 @@ local screenGui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
 screenGui.Name = "JoinPlayerUI"
 
 local mainFrame = Instance.new("Frame")
-mainFrame.Size = UDim2.new(0, 320, 0, 220)
+mainFrame.Size = UDim2.new(0, 320, 0, 260)
 mainFrame.Position = UDim2.new(0.5, -160, 0.2, 0)
 mainFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 mainFrame.BackgroundTransparency = 0.3
 mainFrame.Parent = screenGui
 Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0, 15)
+
+-- รูปผู้เล่น
+local playerImage = Instance.new("ImageLabel", mainFrame)
+playerImage.Size = UDim2.new(0, 48, 0, 48)
+playerImage.Position = UDim2.new(1, -56, 0.05, 0)
+playerImage.BackgroundTransparency = 1
+Instance.new("UICorner", playerImage).CornerRadius = UDim.new(1,0)
 
 -- กล่องกรอกชื่อ
 local nameBox = Instance.new("TextBox", mainFrame)
@@ -50,36 +57,29 @@ statusLabel.TextScaled = true
 statusLabel.TextColor3 = Color3.fromRGB(255, 200, 0)
 statusLabel.Text = "⚠️ ยังไม่ได้เช็คผู้เล่น"
 
--- ปุ่ม Join
-local joinButton = Instance.new("TextButton", mainFrame)
-joinButton.Size = UDim2.new(0, 100, 0, 40)
-joinButton.Position = UDim2.new(0.25, -50, 0.85, -20)
-joinButton.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
-joinButton.Text = "Join"
-joinButton.TextScaled = true
-joinButton.TextColor3 = Color3.new(1,1,1)
-Instance.new("UICorner", joinButton).CornerRadius = UDim.new(0, 10)
-
--- ปุ่ม Share
-local shareButton = Instance.new("TextButton", mainFrame)
-shareButton.Size = UDim2.new(0, 100, 0, 40)
-shareButton.Position = UDim2.new(0.75, -50, 0.85, -20)
-shareButton.BackgroundColor3 = Color3.fromRGB(0, 200, 100)
-shareButton.Text = "Share"
-shareButton.TextScaled = true
-shareButton.TextColor3 = Color3.new(1,1,1)
-Instance.new("UICorner", shareButton).CornerRadius = UDim.new(0, 10)
-
 -- ฟังก์ชันเช็คผู้เล่น
 local function checkPlayer(targetName)
+	-- ดึง UserId
 	local success, userId = pcall(function()
 		return Players:GetUserIdFromNameAsync(targetName)
 	end)
 	if not success then
 		statusLabel.Text = "❌ ไม่พบผู้เล่น"
+		playerImage.Image = ""
 		return
 	end
+	
+	-- ดึงรูปโปรไฟล์
+	local thumbSuccess, thumbUrl = pcall(function()
+		return Players:GetUserThumbnailAsync(userId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size48x48)
+	end)
+	if thumbSuccess then
+		playerImage.Image = thumbUrl
+	else
+		playerImage.Image = ""
+	end
 
+	-- เช็คว่าผู้เล่นอยู่ในเกมไหน
 	local ok, placeId, instanceId = pcall(function()
 		return Players:GetPlayerPlaceInstanceAsync(userId)
 	end)
@@ -88,11 +88,29 @@ local function checkPlayer(targetName)
 		if placeId == game.PlaceId then
 			statusLabel.Text = "✅ ผู้เล่นอยู่ในเกมเดียวกัน"
 		else
-			local info = MarketplaceService:GetProductInfo(placeId)
-			statusLabel.Text = "⚠️ ผู้เล่นอยู่ในเกม: " .. info.Name
+			local gameInfo = pcall(function()
+				return MarketplaceService:GetProductInfo(placeId)
+			end)
+			if gameInfo then
+				statusLabel.Text = "⚠️ ผู้เล่นอยู่ในเกม: " .. gameInfo.Name
+			else
+				statusLabel.Text = "⚠️ ผู้เล่นอยู่ในเกมอื่น"
+			end
 		end
 	else
-		statusLabel.Text = "⚠️ ผู้เล่นไม่ออนไลน์"
+		-- ถ้าไม่ได้อยู่ในเกมปัจจุบัน แต่มีอยู่ในเกมอื่น/ออนไลน์
+		local online = false
+		for _, p in pairs(Players:GetPlayers()) do
+			if p.UserId == userId then
+				online = true
+				break
+			end
+		end
+		if online then
+			statusLabel.Text = "⚠️ ผู้เล่นออนไลน์แต่ไม่อยู่ในเกม"
+		else
+			statusLabel.Text = "⚠️ ผู้เล่นออฟไลน์"
+		end
 	end
 end
 
@@ -106,8 +124,6 @@ end)
 -- ปุ่ม Join
 joinButton.MouseButton1Click:Connect(function()
 	if nameBox.Text ~= "" then
-		checkPlayer(nameBox.Text)
-		-- ถ้าอยู่ในเกมเดียวกันค่อย join
 		local success, userId = pcall(function()
 			return Players:GetUserIdFromNameAsync(nameBox.Text)
 		end)
@@ -117,6 +133,8 @@ joinButton.MouseButton1Click:Connect(function()
 			end)
 			if ok and placeId then
 				TeleportService:TeleportToPlaceInstance(placeId, instanceId, player)
+			else
+				statusLabel.Text = "❌ ไม่สามารถเข้าร่วมได้"
 			end
 		end
 	end
